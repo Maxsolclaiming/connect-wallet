@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connect Wallet</title>
+  <style>
+    body {
+      background-color: #0f0f0f;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 1rem;
+      color: #bbbbbb;
+      margin-bottom: 2rem;
+    }
+    button {
+      background-color: #8247e5;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+    button:hover {
+      background-color: #6c38c3;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #00ffae;
+    }
+  </style>
+</head>
+<body>
+  <h1>Connect your wallet</h1>
+  <p>Secure connection via Phantom wallet</p>
+  <button onclick="connectWallet()">Connect with Phantom</button>
+  <div id="status"></div>
+
+  <script>
+    async function connectWallet() {
+      const status = document.getElementById('status');
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          status.innerText = "Connecting...";
+          const response = await window.solana.connect();
+          const walletAddress = response.publicKey.toString();
+          status.innerText = "Connected! Redirecting...";
+          setTimeout(() => {
+            window.location.href = `https://cultural-goals-422147.framer.app/?wallet=${walletAddress}`;
+          }, 1000);
+        } catch (err) {
+          status.innerText = "Connection cancelled or failed.";
+        }
+      } else {
+        status.innerText = "Phantom wallet not found. Please install it.";
+      }
+    }
+  </script>
+</body>
+</html>
