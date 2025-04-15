@@ -5,8 +5,85 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Connect Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.0/lib/index.iife.min.js"></script>
   <style>
+    <script>
+  const connectButton = document.getElementById("connectButton");
+  const status = document.getElementById("walletStatus");
+  let provider = null;
+  let userPublicKey = null;
+
+  const getProvider = () => {
+    if ("phantom" in window) {
+      const anyWindow = window;
+      const provider = anyWindow.phantom?.solana;
+      if (provider?.isPhantom) {
+        return provider;
+      }
+    }
+    window.open("https://phantom.app/", "_blank");
+  };
+
+  connectButton.addEventListener("click", async () => {
+    provider = getProvider();
+    if (!provider) return;
+
+    try {
+      const resp = await provider.connect();
+      userPublicKey = resp.publicKey.toString();
+      status.innerText = `Wallet connected: ${userPublicKey}`;
+      checkClaimableSOL(userPublicKey);
+    } catch (err) {
+      console.error("Connection error:", err);
+    }
+  });
+
+  async function checkClaimableSOL(walletAddress) {
+    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
+
+    // Ici, on récupère tous les token accounts fermés avec un solde
+    const parsedAccounts = await connection.getParsedProgramAccounts(
+      solanaWeb3.SystemProgram.programId,
+      {
+        filters: [
+          {
+            dataSize: 0, // empty accounts
+          },
+          {
+            memcmp: {
+              offset: 0,
+              bytes: walletAddress
+            }
+          }
+        ]
+      }
+    );
+
+    let totalLamports = 0;
+    parsedAccounts.forEach(account => {
+      totalLamports += account.account.lamports;
+    });
+
+    const totalSOL = totalLamports / solanaWeb3.LAMPORTS_PER_SOL;
+
+    // Afficher le solde récupérable
+    if (totalSOL > 0) {
+      const recoverDiv = document.createElement("div");
+      recoverDiv.innerHTML = `
+        <p>You have <strong>${totalSOL.toFixed(4)} SOL</strong> available to recover.</p>
+        <button id="recoverBtn">Recover your SOL</button>
+      `;
+      document.body.appendChild(recoverDiv);
+    } else {
+      const noneDiv = document.createElement("p");
+      noneDiv.innerText = "No SOL available to recover.";
+      document.body.appendChild(noneDiv);
+    }
+  }
+</script>
     body {
+     <button id="connectButton">Connect Wallet</button>
+<p id="walletStatus"></p>
       background-color: #0f0f0f;
       color: #ffffff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
